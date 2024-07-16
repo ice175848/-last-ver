@@ -41,8 +41,44 @@ namespace 珠心算出題_加減_
         {
             showAnswers = !showAnswers;
             toggleAnswerButton.Text = showAnswers ? "隱藏答案" : "顯示答案";
+            ShowOrHideAnswers(); // 顯示或隱藏答案
             pictureBox1.Image = _flag; // 重新繪製圖片
         }
+        private void ShowOrHideAnswers()
+        {
+            using (Graphics flagGraphics = Graphics.FromImage(_flag))
+            {
+                int startX = 60;
+                int startY = 70; // 起始Y坐標
+                int cellWidth = 50;
+                int cellHeight = 40;
+                int numCols = 10;
+                int numRows = 3;
+
+                for (int l = 0; l < 4; l++)
+                {
+                    int yOffset = startY + l * (numRows + 2) * cellHeight;
+                    for (int j = 0; j < numCols; j++)
+                    {
+                        if (showAnswers)
+                        {
+                            int ans = 0;
+                            for (int i = 0; i < numRows; i++)
+                            {
+                                ans += _memory[j + l * 10, i];
+                            }
+                            flagGraphics.DrawString(ans.ToString(), _drawFont, _drawBrush, startX + j * cellWidth + cellWidth / 2, yOffset + numRows * cellHeight + 10, new StringFormat { Alignment = StringAlignment.Center });
+                        }
+                        else
+                        {
+                            flagGraphics.FillRectangle(_whiteBrush, new Rectangle(startX + j * cellWidth + 1, yOffset + numRows * cellHeight + 10, cellWidth - 2, cellHeight - 10));
+                        }
+                    }
+                }
+            }
+        }
+
+
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -280,7 +316,6 @@ namespace 珠心算出題_加減_
             }
         }
 
-
         private void GenerateLevel5Questions()
         {
             // Add your code for Level 5 questions
@@ -318,15 +353,12 @@ namespace 珠心算出題_加減_
                 flagGraphics.Clear(Color.White); // 設置背景為白色
 
                 int startX = 60;
-                int startY = 60; // 調整起始Y坐標以留出更多空間顯示題號和框線
+                int startY = 70; // 調整起始Y坐標以留出更多空間顯示題號和框線
                 int cellWidth = 50;
                 int cellHeight = 40;
                 int numCols = 10;
                 int numRows = 3;
                 int totalRows = 4 * (numRows + 2);
-
-                // 繪製外圍黑色粗框
-                flagGraphics.DrawRectangle(_noPen, startX - 1, startY - cellHeight - 21, cellWidth * numCols + 2, cellHeight * totalRows + 22);
 
                 for (int l = 0; l < 4; l++)
                 {
@@ -340,13 +372,9 @@ namespace 珠心算出題_加減_
                         for (int i = 0; i < numRows; i++)
                         {
                             int random = _rnd.Next(1, 10);
+                            _memory[j + l * 10, i] = random;  // 正確記錄數據
                             ans += random;
-                            _memory[j, i] = random;
                             flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, startX + j * cellWidth + cellWidth / 2, yOffset + i * cellHeight + 10, new StringFormat { Alignment = StringAlignment.Center });
-                        }
-                        if (showAnswers)
-                        {
-                            flagGraphics.DrawString(ans.ToString(), _drawFont, _drawBrush, startX + j * cellWidth + cellWidth / 2, yOffset + numRows * cellHeight + 10, new StringFormat { Alignment = StringAlignment.Center });
                         }
                     }
 
@@ -357,7 +385,7 @@ namespace 珠心算出題_加減_
                     }
 
                     // 繪製區隔上下題目的橫線
-                    flagGraphics.DrawLine(_mPen, startX, yOffset - cellHeight+15, startX + cellWidth * numCols, yOffset - cellHeight+15); // 題號區的橫線
+                    flagGraphics.DrawLine(_mPen, startX, yOffset - cellHeight+15, startX + cellWidth * numCols, yOffset - cellHeight+15); // 題號區的橫線 *
                     flagGraphics.DrawLine(_mPen, startX, yOffset + numRows * cellHeight, startX + cellWidth * numCols, yOffset + numRows * cellHeight); // 答案區上方的橫線
                     flagGraphics.DrawLine(_mPen, startX, yOffset + (numRows + 1) * cellHeight, startX + cellWidth * numCols, yOffset + (numRows + 1) * cellHeight); // 區隔上下題目的橫線
 
@@ -367,32 +395,11 @@ namespace 珠心算出題_加減_
                     flagGraphics.DrawString("NO", _noFont, _drawBrush, startX - 30, yOffset + 10);
                     flagGraphics.DrawString("Ans", _noFont, _drawBrush, startX - 30, yOffset + numRows * cellHeight + 10);
                 }
+                // 繪製外圍黑色粗框
+                flagGraphics.DrawRectangle(_noPen, startX - 1, startY - cellHeight - 21+21, cellWidth * numCols + 2, cellHeight * totalRows + 2);
+
             }
         }
-
-
-        /*
-        using (Graphics flagGraphics = Graphics.FromImage(_flag))
-        {
-            for (int l = 0; l < 4; l++)
-            {
-                for (int j = 0; j < 10; j++)
-                {
-                    int ans = 0;
-
-                    for (int i = 0; i < 3; i++)
-                    {
-                        int random = _rnd.Next(1, 10); // 生成一個1到9的隨機數
-                        ans += random;
-                        _memory[j, i] = random;
-                        flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 20 + 210 * l + i * 20, _strFormat);
-                    }
-
-                    //flagGraphics.DrawString(ans.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 20 + 210 * l + 3 * 20, _strFormat); //解答
-                }
-            }
-        }*/
-
 
         private int CalculateMinusCheckAns(int j, int minus)
         {
