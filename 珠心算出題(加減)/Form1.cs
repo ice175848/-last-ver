@@ -105,7 +105,7 @@ namespace 珠心算出題_加減_
         {
             InitializeBitmap();
             ClearMemory();
-            if(_difficultyComboBox.SelectedIndex!=10)
+            if(_difficultyComboBox.SelectedIndex!=10)//11級不要畫背景 因為背景不同
             {
                 DrawGrid();
             }
@@ -243,7 +243,6 @@ namespace 珠心算出題_加減_
 
         private void GenerateLevel4Questions()
         {
-
             using (Graphics flagGraphics = Graphics.FromImage(_flag))
             {
                 flagGraphics.Clear(Color.White);
@@ -252,16 +251,16 @@ namespace 珠心算出題_加減_
                 int NO_height = 20;
                 int lastMinus = 0;
                 int minus = 0;
-
-                for (int l = 0; l < 4; l++)
+                DrawGrid();
+                for (int l = 0; l < 4; l++)//4排題目
                 {
-                    for (int j = 0; j < 10; j++)
+                    for (int j = 0; j < 10; j++)//每排10題
                     {
                         int ans = 0;
                         int minus_check_ans = 0;
                         int minus_quest = 0;
 
-                        if (j == 0 || j == 2 || j == 4 || j == 5 || j == 7 || j == 9)
+                        if (j == 0 || j == 2 || j == 4 || j == 5 || j == 7 || j == 9)//第1,3,5,6,8,10題要是正的
                         {
                             for (int i = 0; i < times; i++)
                             {
@@ -272,7 +271,7 @@ namespace 珠心算出題_加減_
                                 flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
                             }
                         }
-                        else if (j == 1 || j == 3 || j == 6 || j == 8)
+                        else if (j == 1 || j == 3 || j == 6 || j == 8)//第2,4,7,9題是有負數的
                         {
                             for (int i = 0; i < times; i++)
                             {
@@ -282,9 +281,9 @@ namespace 珠心算出題_加減_
                                 flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 20, _strFormat);
                                 flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
                             }
-
+                        //如果是計算過程產生負 重新考慮排負位置
                         OneMoreTime:
-                            minus = _rnd.Next(1, times);
+                            minus = _rnd.Next(1, times);//負數的位置在其中一口數
 
                             if (minus == lastMinus)
                                 goto OneMoreTime;
@@ -293,7 +292,7 @@ namespace 珠心算出題_加減_
                             {
                                 minus_check_ans += _memory[j, i];
                             }
-                            if (minus_quest >= 2)
+                            if (minus_quest >= 2)//如果生成負數
                             {
                                 continue;
                             }
@@ -340,11 +339,78 @@ namespace 珠心算出題_加減_
         {
             // Add your code for Level 9 questions
         }
-
         private void GenerateLevel10Questions()
         {
-            // Add your code for Level 10 questions
+            using (Graphics flagGraphics = Graphics.FromImage(_flag))
+            {
+                flagGraphics.Clear(Color.White);
+                int times = 4;
+                double max = 9;
+                int NO_height = 20;
+                int lastMinus = 0;
+                int minus = 0;
+
+                DrawGrid();
+
+                for (int l = 0; l < 4; l++)//4排題目
+                {
+                    for (int j = 0; j < 10; j++)//每排10題
+                    {
+                        int ans = 0;
+                        int minus_check_ans = 0;
+                        int minus_quest = 0;
+
+                        if (j == 0 || j == 2 || j == 4 || j == 5 || j == 7 || j == 9)//第1,3,5,6,8,10題要是正的
+                        {
+                            for (int i = 0; i < times; i++)
+                            {
+                                int random = _rnd.Next(1, (int)max);
+                                ans += random;
+                                _memory[j, i] = random;
+                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 20, _strFormat);
+                                flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                            }
+                        }
+                        else if (j == 1 || j == 3 || j == 6 || j == 8)//第2,4,7,9題是有負數的
+                        {
+                            for (int i = 0; i < times; i++)
+                            {
+                                int random = _rnd.Next(1, (int)max);
+                                //ans += random;
+                                _memory[j, i] = random;
+
+                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 20, _strFormat);
+                                flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                            }
+
+                            while (minus_quest < 1)
+                            {
+                            OneMoreTime:
+                                minus = _rnd.Next(1, times);//負數的位置在(times)其中一(minus)口數(1~3之間)
+                                minus_check_ans = 0;
+                                _memory[j, minus] = _memory[j, minus] * -1;
+
+                                for (int a = 0; a < times; a++)//驗算一下過程中有沒有負數
+                                {
+                                    minus_check_ans += _memory[j, a];
+                                    if (minus_check_ans < 0)
+                                    {
+                                        _memory[j, minus] = _memory[j, minus] * -1;
+                                        goto OneMoreTime;
+                                    }
+                                }
+                                minus_quest++;
+                                flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j-23, 210 * l + NO_height + minus * 20,20,20);
+                                flagGraphics.DrawString(_memory[j,minus].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + minus * 20, _strFormat);
+                                flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                            }
+
+                        }
+                    }
+                }
+            }
         }
+
 
         private void GenerateLevel11Questions()
         {
