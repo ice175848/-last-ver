@@ -35,6 +35,7 @@ namespace 珠心算出題_加減_
                 Size = new Size(100, 30)
             };
             toggleAnswerButton.Click += ToggleAnswerButton_Click;
+            toggleAnswerButton.Enabled = false;
             Controls.Add(toggleAnswerButton);
         }
         private void ToggleAnswerButton_Click(object sender, EventArgs e)
@@ -103,6 +104,7 @@ namespace 珠心算出題_加減_
 
         private void button1_Click(object sender, EventArgs e)
         {
+            toggleAnswerButton.Enabled = true;
             InitializeBitmap();
             ClearMemory();
             if(_difficultyComboBox.SelectedIndex!=10)//11級不要畫背景 因為背景不同
@@ -341,12 +343,14 @@ namespace 珠心算出題_加減_
         }
         private void GenerateLevel10Questions()
         {
+            toggleAnswerButton.Enabled = false;
+            toggleAnswerButton.Text = "暫未開放";
             using (Graphics flagGraphics = Graphics.FromImage(_flag))
             {
                 flagGraphics.Clear(Color.White);
                 int times = 4;
                 double max = 10;
-                int NO_height = 20;
+                int NO_height = 30;
                 int lastMinus = 0;
                 int minus = 0;
 
@@ -367,7 +371,7 @@ namespace 珠心算出題_加減_
                                 int random = _rnd.Next(1, (int)max);
                                 ans += random;
                                 _memory[j, i] = random;
-                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 20, _strFormat);
+                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 40, _strFormat);
                                 flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
                             }
                         }
@@ -377,14 +381,14 @@ namespace 珠心算出題_加減_
                             {
                                 int random = _rnd.Next(1, (int)max);
                                 _memory[j, i] = random;
-                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 20, _strFormat);
+                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 40, _strFormat);
                                 flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
                             }
                             int specialNumber = _rnd.Next(0, 3);
                             _memory[j, specialNumber] = _rnd.Next(10, 100);
 
-                            flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + specialNumber * 20 + 1, 20, 20);//誤差1 故Y座標+1
-                            flagGraphics.DrawString(_memory[j, specialNumber].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + specialNumber * 20, _strFormat);
+                            flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + specialNumber * 40 + 1, 20, 20);//誤差1 故Y座標+1
+                            flagGraphics.DrawString(_memory[j, specialNumber].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + specialNumber * 40, _strFormat);
                         }
                         else if (j == 1 || j == 3)//第2,4題是有負數的一位數四口
                         {
@@ -393,7 +397,7 @@ namespace 珠心算出題_加減_
                                 int random = _rnd.Next(1, (int)max);
                                 _memory[j, i] = random;
 
-                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 20, _strFormat);
+                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 40, _strFormat);
                                 flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
                             }
 
@@ -415,8 +419,8 @@ namespace 珠心算出題_加減_
                                 }
 
                                 minus_quest++;
-                                flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + minus * 20, 20, 20);
-                                flagGraphics.DrawString(_memory[j, minus].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + minus * 20, _strFormat);
+                                flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + minus * 40, 20, 20);
+                                flagGraphics.DrawString(_memory[j, minus].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + minus * 40, _strFormat);
                                 flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
                             }
                         }
@@ -426,13 +430,13 @@ namespace 珠心算出題_加減_
                             {
                                 int random = _rnd.Next(1, (int)max);
                                 _memory[j, i] = random;
-                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 20, _strFormat);
+                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 40, _strFormat);
                                 flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
                             }
                             int specialNumber = _rnd.Next(0, 3);//二位數的位置
                             _memory[j, specialNumber] = _rnd.Next(10, 100);
-                            flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + specialNumber * 20 + 1, 20, 20);//誤差1 故Y座標+1
-                            flagGraphics.DrawString(_memory[j, specialNumber].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + specialNumber * 20, _strFormat);
+                            flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + specialNumber * 40 + 1, 20, 20);//誤差1 故Y座標+1
+                            flagGraphics.DrawString(_memory[j, specialNumber].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + specialNumber * 40, _strFormat);
                             int faultTimes=0;
                         OneMoreTime:
                             minus = _rnd.Next(1, 3);//負數的位置
@@ -464,16 +468,16 @@ namespace 珠心算出題_加減_
                                     _memory[j, 0] = _memory[j, specialNumber];
                                     _memory[j, 2] = n0*-1;
 
-                                    flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + 0 * 20 + 1, 20, 20);
-                                    flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 26, 210 * l + NO_height + 2 * 20 + 1, 22, 20);
-                                    flagGraphics.DrawString(_memory[j,0].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + 0 * 20, _strFormat);
-                                    flagGraphics.DrawString(_memory[j,2].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + 2 * 20, _strFormat);
+                                    flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + 0 * 40 + 1, 20, 20);
+                                    flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 26, 210 * l + NO_height + 2 * 40 + 1, 22, 20);
+                                    flagGraphics.DrawString(_memory[j,0].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + 0 * 40, _strFormat);
+                                    flagGraphics.DrawString(_memory[j,2].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + 2 * 40, _strFormat);
                                 }
                             }
 
                             //_memory[j, minus] = _memory[j, minus] * -1;
-                            flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + minus * 20 + 1, 20, 20);
-                            flagGraphics.DrawString(_memory[j, minus].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + minus * 20, _strFormat);
+                            flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + minus * 40 + 1, 20, 20);
+                            flagGraphics.DrawString(_memory[j, minus].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + minus * 40, _strFormat);
                         }
                     }
                 }
