@@ -35,6 +35,7 @@ namespace 珠心算出題_加減_
                 Size = new Size(100, 30)
             };
             toggleAnswerButton.Click += ToggleAnswerButton_Click;
+            toggleAnswerButton.Enabled = false;
             Controls.Add(toggleAnswerButton);
         }
         private void ToggleAnswerButton_Click(object sender, EventArgs e)
@@ -103,6 +104,7 @@ namespace 珠心算出題_加減_
 
         private void button1_Click(object sender, EventArgs e)
         {
+            toggleAnswerButton.Enabled = true;
             InitializeBitmap();
             ClearMemory();
             if(_difficultyComboBox.SelectedIndex!=10)//11級不要畫背景 因為背景不同
@@ -341,12 +343,14 @@ namespace 珠心算出題_加減_
         }
         private void GenerateLevel10Questions()
         {
+            toggleAnswerButton.Enabled = false;
+            toggleAnswerButton.Text = "暫未開放";
             using (Graphics flagGraphics = Graphics.FromImage(_flag))
             {
                 flagGraphics.Clear(Color.White);
                 int times = 4;
-                double max = 9;
-                int NO_height = 20;
+                double max = 10;
+                int NO_height = 30;
                 int lastMinus = 0;
                 int minus = 0;
 
@@ -360,26 +364,40 @@ namespace 珠心算出題_加減_
                         int minus_check_ans = 0;
                         int minus_quest = 0;
 
-                        if (j == 0 || j == 2 || j == 4 || j == 5 || j == 7 || j == 9)//第1,3,5,6,8,10題要是正的
+                        if (j == 0 || j == 2 || j == 4)//第1,3,5題要是正的一位數四口
                         {
                             for (int i = 0; i < times; i++)
                             {
                                 int random = _rnd.Next(1, (int)max);
                                 ans += random;
                                 _memory[j, i] = random;
-                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 20, _strFormat);
+                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 40, _strFormat);
                                 flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
                             }
                         }
-                        else if (j == 1 || j == 3 || j == 6 || j == 8)//第2,4,7,9題是有負數的
+                        else if (j == 5 || j == 7 || j == 9)//第6,8,10題是正的一位二口+二位一口
+                        {
+                            for (int i = 0; i < times - 1; i++)//只需要(4-1)三口數字 之後再把其中一口換成二位數
+                            {
+                                int random = _rnd.Next(1, (int)max);
+                                _memory[j, i] = random;
+                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 40, _strFormat);
+                                flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                            }
+                            int specialNumber = _rnd.Next(0, 3);
+                            _memory[j, specialNumber] = _rnd.Next(10, 100);
+
+                            flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + specialNumber * 40 + 1, 20, 20);//誤差1 故Y座標+1
+                            flagGraphics.DrawString(_memory[j, specialNumber].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + specialNumber * 40, _strFormat);
+                        }
+                        else if (j == 1 || j == 3)//第2,4題是有負數的一位數四口
                         {
                             for (int i = 0; i < times; i++)
                             {
                                 int random = _rnd.Next(1, (int)max);
-                                //ans += random;
                                 _memory[j, i] = random;
 
-                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 20, _strFormat);
+                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 40, _strFormat);
                                 flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
                             }
 
@@ -399,12 +417,67 @@ namespace 珠心算出題_加減_
                                         goto OneMoreTime;
                                     }
                                 }
+
                                 minus_quest++;
-                                flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j-23, 210 * l + NO_height + minus * 20,20,20);
-                                flagGraphics.DrawString(_memory[j,minus].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + minus * 20, _strFormat);
+                                flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + minus * 40, 20, 20);
+                                flagGraphics.DrawString(_memory[j, minus].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + minus * 40, _strFormat);
                                 flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
                             }
+                        }
+                        else if (j == 6 || j == 8)//第7,9題是正的二位一口+正的一位一口+負的一位一口
+                        {
+                            for (int i = 0; i < times - 1; i++)//只需要(4-1)三口數字 之後再把其中一口換成二位數 再把其中一口一位數換成負的
+                            {
+                                int random = _rnd.Next(1, (int)max);
+                                _memory[j, i] = random;
+                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 40, _strFormat);
+                                flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                            }
+                            int specialNumber = _rnd.Next(0, 3);//二位數的位置
+                            _memory[j, specialNumber] = _rnd.Next(10, 100);
+                            flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + specialNumber * 40 + 1, 20, 20);//誤差1 故Y座標+1
+                            flagGraphics.DrawString(_memory[j, specialNumber].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + specialNumber * 40, _strFormat);
+                            int faultTimes=0;
+                        OneMoreTime:
+                            minus = _rnd.Next(1, 3);//負數的位置
+                            if (minus == specialNumber)//負數不能是二位數或是在第一個數字(0)
+                            {
+                                goto OneMoreTime;//重新生成一次負數的位置
+                            }
+                            else
+                            {
+                                minus_check_ans = 0;
+                                _memory[j, minus] = _memory[j, minus] * -1;
+                                for (int i = 0; i < 3; i++)
+                                {
+                                    minus_check_ans += _memory[j, i];
+                                    if (minus_check_ans < 0)
+                                    {
+                                        _memory[j, minus] = _memory[j, minus] * -1;
+                                        faultTimes++;
+                                        if (faultTimes > 100)
+                                        {
+                                            break;
+                                        }
+                                        goto OneMoreTime;
+                                    }
+                                }
+                                if(faultTimes>100)
+                                {
+                                    int n0 = _memory[j, 0];
+                                    _memory[j, 0] = _memory[j, specialNumber];
+                                    _memory[j, 2] = n0*-1;
 
+                                    flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + 0 * 40 + 1, 20, 20);
+                                    flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 26, 210 * l + NO_height + 2 * 40 + 1, 22, 20);
+                                    flagGraphics.DrawString(_memory[j,0].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + 0 * 40, _strFormat);
+                                    flagGraphics.DrawString(_memory[j,2].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + 2 * 40, _strFormat);
+                                }
+                            }
+
+                            //_memory[j, minus] = _memory[j, minus] * -1;
+                            flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + minus * 40 + 1, 20, 20);
+                            flagGraphics.DrawString(_memory[j, minus].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + minus * 40, _strFormat);
                         }
                     }
                 }
