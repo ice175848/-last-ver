@@ -10,7 +10,7 @@ namespace 珠心算出題_加減_
         private readonly int[,] _memory = new int[40, 8]; // 最多 40 題，每排最多 8 字
         private readonly Pen _mPen = new Pen(Color.Black, 1);
         private readonly Pen _noPen = new Pen(Color.Black, 2);
-        private readonly Font _drawFont = new Font("Abacus_Fonts", 16F); // 字體
+        private Font _drawFont; // 字體
         private readonly Font _noFont = new Font("Arial", 10F); // 字體
         private readonly SolidBrush _drawBrush = new SolidBrush(Color.Black);
         private readonly SolidBrush _whiteBrush = new SolidBrush(Color.White);
@@ -78,11 +78,26 @@ namespace 珠心算出題_加減_
                 }
             }
         }
+        private bool CheckForNegative(int j, int numberOfDigits)
+        {
+            int sum = 0;
+            for (int i = 0; i < numberOfDigits; i++)
+            {
+                sum += _memory[j, i];
+                if (sum < 0)
+                {
+                    return true; // 計算過程中出現負數
+                }
+            }
+            return false; // 計算過程中沒有出現負數
+        }
+
 
 
 
         private void Form1_Load(object sender, EventArgs e)
         {
+
         }
 
         private void InitializeComboBox()
@@ -105,6 +120,7 @@ namespace 珠心算出題_加減_
         private void button1_Click(object sender, EventArgs e)
         {
             toggleAnswerButton.Enabled = true;
+            _drawFont = new Font(comboBox1.Text, float.Parse(numericUpDown1.Text)); // 字體
             InitializeBitmap();
             ClearMemory();
             if(_difficultyComboBox.SelectedIndex!=10)//11級不要畫背景 因為背景不同
@@ -339,8 +355,124 @@ namespace 珠心算出題_加減_
 
         private void GenerateLevel9Questions()
         {
-            // Add your code for Level 9 questions
+            toggleAnswerButton.Enabled = false;
+            toggleAnswerButton.Text = "暫未開放";
+            using (Graphics flagGraphics = Graphics.FromImage(_flag))
+            {
+                flagGraphics.Clear(Color.White);
+                int times = 5; // 更新為5口
+                double max = 10;
+                int NO_height = 30;
+                int lastMinus = 0;
+                int minus = 0;
+
+                DrawGrid();
+
+                for (int l = 0; l < 4; l++)//4排題目
+                {
+                    for (int j = 0; j < 10; j++)//每排10題
+                    {
+                        int ans = 0;
+                        int minus_check_ans = 0;
+                        int minus_quest = 0;
+
+                        if (j == 0 || j == 2 || j == 4)//第1,3,5題要是正的一位數五口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times; i++)
+                                {
+                                    int random = _rnd.Next(1, (int)max);
+                                    _memory[j, i] = random;
+                                }
+                            } while (CheckForNegative(j, times));
+
+                            for (int i = 0; i < times; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 40, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 5 || j == 7 || j == 9)//第6,8,10題是正的一位三口+二位一口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times - 1; i++)//只需要(5-1)四口數字 之後再把其中一口換成二位數
+                                {
+                                    int random = _rnd.Next(1, (int)max);
+                                    _memory[j, i] = random;
+                                }
+                                int specialNumber = _rnd.Next(0, 4);
+                                _memory[j, specialNumber] = _rnd.Next(10, 100);
+                            } while (CheckForNegative(j, times));
+
+                            for (int i = 0; i < times; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 40, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 1 || j == 3)//第2,4題是有負數的一位數五口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times; i++)
+                                {
+                                    int random = _rnd.Next(1, (int)max);
+                                    _memory[j, i] = random;
+                                }
+                                int firstMinus = _rnd.Next(1, times);
+                                int secondMinus;
+                                do
+                                {
+                                    secondMinus = _rnd.Next(1, times);
+                                } while (secondMinus == firstMinus);
+
+                                _memory[j, firstMinus] *= -1;
+                                _memory[j, secondMinus] *= -1;
+                            } while (CheckForNegative(j, times));
+
+                            for (int i = 0; i < times; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 40, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 6 || j == 8)//第7,9題是正的二位一口+正的一位三口+負的一位二口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times - 1; i++)//只需要(5-1)四口數字 之後再把其中一口換成二位數 再把其中一口一位數換成負的
+                                {
+                                    int random = _rnd.Next(1, (int)max);
+                                    _memory[j, i] = random;
+                                }
+                                int specialNumber = _rnd.Next(0, 4);//二位數的位置
+                                _memory[j, specialNumber] = _rnd.Next(10, 100);
+
+                                int firstMinus = _rnd.Next(1, times);
+                                int secondMinus;
+                                do
+                                {
+                                    secondMinus = _rnd.Next(1, times);
+                                } while (secondMinus == firstMinus || secondMinus == specialNumber);
+
+                                _memory[j, firstMinus] *= -1;
+                                _memory[j, secondMinus] *= -1;
+                            } while (CheckForNegative(j, times));
+
+                            for (int i = 0; i < times; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 40, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                    }
+                }
+            }
         }
+
+
         private void GenerateLevel10Questions()
         {
             toggleAnswerButton.Enabled = false;
@@ -474,7 +606,6 @@ namespace 珠心算出題_加減_
                                     flagGraphics.DrawString(_memory[j,2].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + 2 * 40, _strFormat);
                                 }
                             }
-
                             //_memory[j, minus] = _memory[j, minus] * -1;
                             flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + minus * 40 + 1, 20, 20);
                             flagGraphics.DrawString(_memory[j, minus].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + minus * 40, _strFormat);
