@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -10,8 +11,9 @@ namespace 珠心算出題_加減_
         private readonly int[,] _memory = new int[40, 8]; // 最多 40 題，每排最多 8 字
         private readonly Pen _mPen = new Pen(Color.Black, 1);
         private readonly Pen _noPen = new Pen(Color.Black, 2);
-        private readonly Font _drawFont = new Font("Abacus_Fonts", 16F); // 字體
+        private Font _drawFont; // 字體
         private readonly Font _noFont = new Font("Arial", 10F); // 字體
+        private int question_gap;
         private readonly SolidBrush _drawBrush = new SolidBrush(Color.Black);
         private readonly SolidBrush _whiteBrush = new SolidBrush(Color.White);
         private readonly StringFormat _strFormat = new StringFormat { Alignment = StringAlignment.Far };
@@ -78,11 +80,26 @@ namespace 珠心算出題_加減_
                 }
             }
         }
+        private bool CheckForNegative(int j, int numberOfDigits)
+        {
+            int sum = 0;
+            for (int i = 0; i < numberOfDigits; i++)
+            {
+                sum += _memory[j, i];
+                if (sum < 0)
+                {
+                    return true; // 計算過程中出現負數
+                }
+            }
+            return false; // 計算過程中沒有出現負數
+        }
+
 
 
 
         private void Form1_Load(object sender, EventArgs e)
         {
+
         }
 
         private void InitializeComboBox()
@@ -99,12 +116,58 @@ namespace 珠心算出題_加減_
             }
 
             _difficultyComboBox.SelectedIndex = 0;
+            _difficultyComboBox.SelectedIndexChanged += DifficultyComboBox_SelectedIndexChanged;
+
             Controls.Add(_difficultyComboBox);
         }
+        private void DifficultyComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            int selectedDifficulty = _difficultyComboBox.SelectedIndex + 1;
+
+            switch (selectedDifficulty)
+            {
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                    numericUpDown1.Value = 12;
+                    numericUpDown2.Enabled = false;
+                    break;
+                case 5:
+                    numericUpDown1.Value = 13;
+                    numericUpDown2.Value = 20;
+                    break;
+                case 6:
+                    numericUpDown1.Value = 13;
+                    numericUpDown2.Value = 19; 
+                    break;
+                case 7:
+                    numericUpDown1.Value = 13;
+                    numericUpDown2.Value = 22;
+                    break;
+                case 8:
+                    numericUpDown1.Value = 15;
+                    numericUpDown2.Value = 25;
+                    break;
+                case 9:
+                    numericUpDown1.Value = 16;
+                    numericUpDown2.Value = 32;
+                    break;
+                case 10:
+                case 11:
+                default:
+                    question_gap = 30; // 默認值
+                    break;
+            }
+        }
+
 
         private void button1_Click(object sender, EventArgs e)
         {
             toggleAnswerButton.Enabled = true;
+            _drawFont = new Font(comboBox1.Text, float.Parse(numericUpDown1.Text)); // 字體
+            question_gap = (int)numericUpDown2.Value;
+
             InitializeBitmap();
             ClearMemory();
             if(_difficultyComboBox.SelectedIndex!=10)//11級不要畫背景 因為背景不同
@@ -269,7 +332,7 @@ namespace 珠心算出題_加減_
                                 int random = _rnd.Next(10, (int)max);
                                 ans += random;
                                 _memory[j, i] = random;
-                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 20, _strFormat);
+                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 20+2, _strFormat);
                                 flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
                             }
                         }
@@ -280,7 +343,7 @@ namespace 珠心算出題_加減_
                                 int random = _rnd.Next(10, (int)max);
                                 ans += random;
                                 _memory[j, i] = random;
-                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 20, _strFormat);
+                                flagGraphics.DrawString(random.ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * 20+2, _strFormat);
                                 flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
                             }
                         //如果是計算過程產生負 重新考慮排負位置
@@ -302,7 +365,7 @@ namespace 珠心算出題_加減_
                             {
                                 _memory[j, minus] = _memory[j, minus] * -1;
                                 flagGraphics.FillRectangle(_whiteBrush, new Rectangle(67 + 57 * j, NO_height + minus * 20 + 210 * l, 20, 19));
-                                flagGraphics.DrawString(_memory[j, minus].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + minus * 20, _strFormat);
+                                flagGraphics.DrawString(_memory[j, minus].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + minus * 20+2, _strFormat);
                                 minus_quest = minus_quest + 1;
                                 lastMinus = minus;
                                 goto OneMoreTime;
@@ -319,28 +382,682 @@ namespace 珠心算出題_加減_
 
         private void GenerateLevel5Questions()
         {
-            // Add your code for Level 5 questions
+            toggleAnswerButton.Enabled = false;
+            toggleAnswerButton.Text = "暫未開放";
+            using (Graphics flagGraphics = Graphics.FromImage(_flag))
+            {
+                flagGraphics.Clear(Color.White);
+                int times1 = 8; // 1-5題的口數
+                int times2 = 6; // 6-10題的口數
+                double max1 = 10; // 一位數的最大值
+                double max2 = 100; // 二位數的最大值
+                int NO_height = 30;
+                //int question_gap = 25;
+
+                DrawGrid();
+
+                for (int l = 0; l < 4; l++)//4排題目
+                {
+                    for (int j = 0; j < 10; j++)//每排10題
+                    {
+                        int ans = 0;
+                        int minus_check_ans = 0;
+                        int minus_quest = 0;
+
+                        if (j == 0 || j == 2 || j == 4)//第1,3,5題數字順序固定是2位數,1位數,2位數...以此類推
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times1; i++)
+                                {
+                                    if (i % 2 == 0)
+                                    {
+                                        _memory[j, i] = _rnd.Next(10, (int)max2);
+                                    }
+                                    else
+                                    {
+                                        _memory[j, i] = _rnd.Next(1, (int)max1);
+                                    }
+                                }
+                            } while (CheckForNegative(j, times1));
+
+                            for (int i = 0; i < times1; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * question_gap-8, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 1 || j == 3)//第2,4題數字順序固定是1位數,2位數,1位數...以此類推
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times1; i++)
+                                {
+                                    if (i % 2 == 0)
+                                    {
+                                        _memory[j, i] = _rnd.Next(1, (int)max1);
+                                    }
+                                    else
+                                    {
+                                        _memory[j, i] = _rnd.Next(10, (int)max2);
+                                    }
+                                }
+                                int firstMinus = _rnd.Next(0, times1);
+                                int secondMinus;
+                                do
+                                {
+                                    secondMinus = _rnd.Next(0, times1);
+                                } while (secondMinus == firstMinus);
+
+                                _memory[j, firstMinus] *= -1;
+                                _memory[j, secondMinus] *= -1;
+                            } while (CheckForNegative(j, times1));
+
+                            for (int i = 0; i < times1; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * question_gap-8, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 5 || j == 7 || j == 9)//第6,8,10題是二位數六口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times2; i++)
+                                {
+                                    _memory[j, i] = _rnd.Next(10, (int)max2);
+                                }
+                            } while (CheckForNegative(j, times2));
+
+                            for (int i = 0; i < times2; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + (i+1) * question_gap-8, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 6 || j == 8)//第7,9題是有負數的二位數六口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times2; i++)
+                                {
+                                    _memory[j, i] = _rnd.Next(10, (int)max2);
+                                }
+                                int firstMinus = _rnd.Next(0, times2);
+                                int secondMinus;
+                                do
+                                {
+                                    secondMinus = _rnd.Next(0, times2);
+                                } while (secondMinus == firstMinus);
+
+                                _memory[j, firstMinus] *= -1;
+                                _memory[j, secondMinus] *= -1;
+                            } while (CheckForNegative(j, times2));
+
+                            for (int i = 0; i < times2; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + (i+1) * question_gap-8, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                    }
+                }
+            }
         }
 
         private void GenerateLevel6Questions()
         {
+            toggleAnswerButton.Enabled = false;
+            toggleAnswerButton.Text = "暫未開放";
+            using (Graphics flagGraphics = Graphics.FromImage(_flag))
+            {
+                flagGraphics.Clear(Color.White);
+                int times1 = 8; // 1-5題的口數
+                int times2 = 5; // 6-10題的口數
+                double max1 = 10; // 一位數的最大值
+                double max2 = 100; // 二位數的最大值
+                int NO_height = 30;
 
+
+                DrawGrid();
+
+                for (int l = 0; l < 4; l++)//4排題目
+                {
+                    for (int j = 0; j < 10; j++)//每排10題
+                    {
+                        int ans = 0;
+                        int minus_check_ans = 0;
+                        int minus_quest = 0;
+
+                        if (j == 0 || j == 2 || j == 4)//第1,3,5題要是正的一位數八口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times1; i++)
+                                {
+                                    int random = _rnd.Next(1, (int)max1);
+                                    _memory[j, i] = random;
+                                }
+                            } while (CheckForNegative(j, times1));
+
+                            for (int i = 0; i < times1; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 5 || j == 7 || j == 9)//第6,8,10題是正的一位兩口+二位三口
+                        {
+                            do
+                            {
+                                List<int> positions = new List<int> { 0, 1, 2, 3, 4 };
+                                for (int i = 0; i < times2; i++)
+                                {
+                                    if (positions.Count > 0)
+                                    {
+                                        int randomIndex = _rnd.Next(positions.Count);
+                                        int position = positions[randomIndex];
+                                        positions.RemoveAt(randomIndex);
+
+                                        if (i < 2)
+                                        {
+                                            _memory[j, position] = _rnd.Next(1, (int)max1);
+                                        }
+                                        else
+                                        {
+                                            _memory[j, position] = _rnd.Next(10, (int)max2);
+                                        }
+                                    }
+                                }
+                            } while (CheckForNegative(j, times2));
+
+                            for (int i = 0; i < times2; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + (i + 1) * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 1 || j == 3)//第2,4題是有負數的一位數八口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times1; i++)
+                                {
+                                    int random = _rnd.Next(1, (int)max1);
+                                    _memory[j, i] = random;
+                                }
+                                int firstMinus = _rnd.Next(1, times1);
+                                int secondMinus;
+                                do
+                                {
+                                    secondMinus = _rnd.Next(1, times1);
+                                } while (secondMinus == firstMinus);
+
+                                _memory[j, firstMinus] *= -1;
+                                _memory[j, secondMinus] *= -1;
+                            } while (CheckForNegative(j, times1));
+
+                            for (int i = 0; i < times1; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 6 || j == 8)//第7,9題是正的二位三口+正的一位兩口+負的一位兩口
+                        {
+                            do
+                            {
+                                List<int> positions = new List<int> { 0, 1, 2, 3, 4 };
+                                for (int i = 0; i < times2; i++)
+                                {
+                                    if (positions.Count > 0)
+                                    {
+                                        int randomIndex = _rnd.Next(positions.Count);
+                                        int position = positions[randomIndex];
+                                        positions.RemoveAt(randomIndex);
+
+                                        if (i < 2)
+                                        {
+                                            _memory[j, position] = _rnd.Next(1, (int)max1);
+                                        }
+                                        else
+                                        {
+                                            _memory[j, position] = _rnd.Next(10, (int)max2);
+                                        }
+                                    }
+                                }
+
+                                int firstMinus = _rnd.Next(0, times2);
+                                int secondMinus;
+                                do
+                                {
+                                    secondMinus = _rnd.Next(0, times2);
+                                } while (secondMinus == firstMinus);
+
+                                _memory[j, firstMinus] *= -1;
+                                _memory[j, secondMinus] *= -1;
+                            } while (CheckForNegative(j, times2));
+
+                            for (int i = 0; i < times2; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + (i + 1) * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                    }
+                }
+            }
         }
+
 
         private void GenerateLevel7Questions()
         {
-            // Add your code for Level 7 questions
+            toggleAnswerButton.Enabled = false;
+            toggleAnswerButton.Text = "暫未開放";
+            using (Graphics flagGraphics = Graphics.FromImage(_flag))
+            {
+                flagGraphics.Clear(Color.White);
+                int times1 = 7; // 1-5題的口數
+                int times2 = 5; // 6-10題的口數
+                double max1 = 10; // 一位數的最大值
+                double max2 = 100; // 二位數的最大值
+                int NO_height = 30;
+                //int question_gap = 23;
+
+                DrawGrid();
+
+                for (int l = 0; l < 4; l++)//4排題目
+                {
+                    for (int j = 0; j < 10; j++)//每排10題
+                    {
+                        int ans = 0;
+                        int minus_check_ans = 0;
+                        int minus_quest = 0;
+
+                        if (j == 0 || j == 2 || j == 4)//第1,3,5題要是正的一位數七口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times1; i++)
+                                {
+                                    int random = _rnd.Next(1, (int)max1);
+                                    _memory[j, i] = random;
+                                }
+                            } while (CheckForNegative(j, times1));
+
+                            for (int i = 0; i < times1; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 5 || j == 7 || j == 9)//第6,8,10題是正的一位三口+二位兩口
+                        {
+                            do
+                            {
+                                List<int> positions = new List<int> { 0, 1, 2, 3, 4 };
+                                for (int i = 0; i < times2; i++)
+                                {
+                                    if (positions.Count > 0)
+                                    {
+                                        int randomIndex = _rnd.Next(positions.Count);
+                                        int position = positions[randomIndex];
+                                        positions.RemoveAt(randomIndex);
+
+                                        if (i < 3)
+                                        {
+                                            _memory[j, position] = _rnd.Next(1, (int)max1);
+                                        }
+                                        else
+                                        {
+                                            _memory[j, position] = _rnd.Next(10, (int)max2);
+                                        }
+                                    }
+                                }
+                            } while (CheckForNegative(j, times2));
+
+                            for (int i = 0; i < times2; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + (i + 1) * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 1 || j == 3)//第2,4題是有負數的一位數七口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times1; i++)
+                                {
+                                    int random = _rnd.Next(1, (int)max1);
+                                    _memory[j, i] = random;
+                                }
+                                int firstMinus = _rnd.Next(1, times1);
+                                int secondMinus;
+                                do
+                                {
+                                    secondMinus = _rnd.Next(1, times1);
+                                } while (secondMinus == firstMinus);
+
+                                _memory[j, firstMinus] *= -1;
+                                _memory[j, secondMinus] *= -1;
+                            } while (CheckForNegative(j, times1));
+
+                            for (int i = 0; i < times1; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 6 || j == 8)//第7,9題是正的二位兩口+正的一位三口+負的一位兩口
+                        {
+                            do
+                            {
+                                List<int> positions = new List<int> { 0, 1, 2, 3, 4 };
+                                for (int i = 0; i < times2; i++)
+                                {
+                                    if (positions.Count > 0)
+                                    {
+                                        int randomIndex = _rnd.Next(positions.Count);
+                                        int position = positions[randomIndex];
+                                        positions.RemoveAt(randomIndex);
+
+                                        if (i < 3)
+                                        {
+                                            _memory[j, position] = _rnd.Next(1, (int)max1);
+                                        }
+                                        else
+                                        {
+                                            _memory[j, position] = _rnd.Next(10, (int)max2);
+                                        }
+                                    }
+                                }
+
+                                int firstMinus = _rnd.Next(0, times2);
+                                int secondMinus;
+                                do
+                                {
+                                    secondMinus = _rnd.Next(0, times2);
+                                } while (secondMinus == firstMinus);
+
+                                _memory[j, firstMinus] *= -1;
+                                _memory[j, secondMinus] *= -1;
+                            } while (CheckForNegative(j, times2));
+
+                            for (int i = 0; i < times2; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + (i + 1) * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                    }
+                }
+            }
         }
 
         private void GenerateLevel8Questions()
         {
-            // Add your code for Level 8 questions
-        }
+            toggleAnswerButton.Enabled = false;
+            toggleAnswerButton.Text = "暫未開放";
+            using (Graphics flagGraphics = Graphics.FromImage(_flag))
+            {
+                flagGraphics.Clear(Color.White);
+                int times1 = 6; // 1-5題的口數
+                int times2 = 4; // 6-10題的口數
+                double max1 = 10; // 一位數的最大值
+                double max2 = 100; // 二位數的最大值
+                int NO_height = 30;
+                //int question_gap = 25;
 
+                DrawGrid();
+
+                for (int l = 0; l < 4; l++)//4排題目
+                {
+                    for (int j = 0; j < 10; j++)//每排10題
+                    {
+                        int ans = 0;
+                        int minus_check_ans = 0;
+                        int minus_quest = 0;
+
+                        if (j == 0 || j == 2 || j == 4)//第1,3,5題要是正的一位數六口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times1; i++)
+                                {
+                                    int random = _rnd.Next(1, (int)max1);
+                                    _memory[j, i] = random;
+                                }
+                            } while (CheckForNegative(j, times1));
+
+                            for (int i = 0; i < times1; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 5 || j == 7 || j == 9)//第6,8,10題是正的一位二口+二位兩口
+                        {
+                            do
+                            {
+                                List<int> positions = new List<int> { 0, 1, 2, 3 };
+                                for (int i = 0; i < times2; i++)
+                                {
+                                    if (positions.Count > 0)
+                                    {
+                                        int randomIndex = _rnd.Next(positions.Count);
+                                        int position = positions[randomIndex];
+                                        positions.RemoveAt(randomIndex);
+
+                                        if (i < 2)
+                                        {
+                                            _memory[j, position] = _rnd.Next(1, (int)max1);
+                                        }
+                                        else
+                                        {
+                                            _memory[j, position] = _rnd.Next(10, (int)max2);
+                                        }
+                                    }
+                                }
+                            } while (CheckForNegative(j, times2));
+
+                            for (int i = 0; i < times2; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + (i+1) * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 1 || j == 3)//第2,4題是有負數的一位數六口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times1; i++)
+                                {
+                                    int random = _rnd.Next(1, (int)max1);
+                                    _memory[j, i] = random;
+                                }
+                                int firstMinus = _rnd.Next(1, times1);
+                                int secondMinus;
+                                do
+                                {
+                                    secondMinus = _rnd.Next(1, times1);
+                                } while (secondMinus == firstMinus);
+
+                                _memory[j, firstMinus] *= -1;
+                                _memory[j, secondMinus] *= -1;
+                            } while (CheckForNegative(j, times1));
+
+                            for (int i = 0; i < times1; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 6 || j == 8)//第7,9題是正的二位兩口+正的一位兩口+負的一位兩口
+                        {
+                            do
+                            {
+                                List<int> positions = new List<int> { 0, 1, 2, 3 };
+                                for (int i = 0; i < times2; i++)
+                                {
+                                    if (positions.Count > 0)
+                                    {
+                                        int randomIndex = _rnd.Next(positions.Count);
+                                        int position = positions[randomIndex];
+                                        positions.RemoveAt(randomIndex);
+
+                                        if (i < 2)
+                                        {
+                                            _memory[j, position] = _rnd.Next(1, (int)max1);
+                                        }
+                                        else
+                                        {
+                                            _memory[j, position] = _rnd.Next(10, (int)max2);
+                                        }
+                                    }
+                                }
+
+                                int firstMinus = _rnd.Next(0, times2);
+                                int secondMinus;
+                                do
+                                {
+                                    secondMinus = _rnd.Next(0, times2);
+                                } while (secondMinus == firstMinus);
+
+                                _memory[j, firstMinus] *= -1;
+                                _memory[j, secondMinus] *= -1;
+                            } while (CheckForNegative(j, times2));
+
+                            for (int i = 0; i < times2; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + (i+1) * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                    }
+                }
+            }
+        }
         private void GenerateLevel9Questions()
         {
-            // Add your code for Level 9 questions
+            toggleAnswerButton.Enabled = false;
+            toggleAnswerButton.Text = "暫未開放";
+            using (Graphics flagGraphics = Graphics.FromImage(_flag))
+            {
+                flagGraphics.Clear(Color.White);
+                int times1 = 5; // 1-5題的口數
+                int times2 = 4; // 6-10題的口數
+                double max1 = 10; // 一位數的最大值
+                double max2 = 100; // 二位數的最大值
+                int NO_height = 30;
+                //int question_gap = 31;
+
+                DrawGrid();
+
+                for (int l = 0; l < 4; l++)//4排題目
+                {
+                    for (int j = 0; j < 10; j++)//每排10題
+                    {
+                        int ans = 0;
+                        int minus_check_ans = 0;
+                        int minus_quest = 0;
+
+                        if (j == 0 || j == 2 || j == 4)//第1,3,5題要是正的一位數五口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times1; i++)
+                                {
+                                    int random = _rnd.Next(1, (int)max1);
+                                    _memory[j, i] = random;
+                                }
+                            } while (CheckForNegative(j, times1));
+
+                            for (int i = 0; i < times1; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 5 || j == 7 || j == 9)//第6,8,10題是正的一位三口+二位一口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times2 ; i++)//只需要(4-1)三口數字 之後再把其中一口換成二位數
+                                {
+                                    int random = _rnd.Next(1, (int)max1);
+                                    _memory[j, i] = random;
+                                }
+                                int specialNumber = _rnd.Next(0, 3);
+                                _memory[j, specialNumber] = _rnd.Next(10, (int)max2);
+
+                            } while (CheckForNegative(j, times2));
+
+                            for (int i = 0; i < times2; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 1 || j == 3)//第2,4題是有負數的一位數五口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times1; i++)
+                                {
+                                    int random = _rnd.Next(1, (int)max1);
+                                    _memory[j, i] = random;
+                                }
+                                int firstMinus = _rnd.Next(1, times1);
+                                int secondMinus;
+                                do
+                                {
+                                    secondMinus = _rnd.Next(1, times1);
+                                } while (secondMinus == firstMinus);
+
+                                _memory[j, firstMinus] *= -1;
+                                _memory[j, secondMinus] *= -1;
+                            } while (CheckForNegative(j, times1));
+
+                            for (int i = 0; i < times1; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                        else if (j == 6 || j == 8)//第7,9題是正的二位一口+正的一位三口+負的一位兩口
+                        {
+                            do
+                            {
+                                for (int i = 0; i < times2 ; i++)//只需要(4-1)三口數字 之後再把其中一口換成二位數 再把其中一口一位數換成負的
+                                {
+                                    int random = _rnd.Next(1, (int)max1);
+                                    _memory[j, i] = random;
+                                }
+                                int specialNumber = _rnd.Next(0, 3);//二位數的位置
+                                _memory[j, specialNumber] = _rnd.Next(10, (int)max2);
+
+                                int firstMinus = _rnd.Next(1, times2);
+                                int secondMinus;
+                                do
+                                {
+                                    secondMinus = _rnd.Next(1, times2);
+                                } while (secondMinus == firstMinus || secondMinus == specialNumber);
+
+                                _memory[j, firstMinus] *= -1;
+                                _memory[j, secondMinus] *= -1;
+                            } while (CheckForNegative(j, times2));
+
+                            for (int i = 0; i < times2; i++)
+                            {
+                                flagGraphics.DrawString(_memory[j, i].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + i * question_gap, _strFormat);
+                            }
+                            flagGraphics.DrawLine(_mPen, 30 + 57 * j, 1, 30 + 57 * j, 840);
+                        }
+                    }
+                }
+            }
         }
+
         private void GenerateLevel10Questions()
         {
             toggleAnswerButton.Enabled = false;
@@ -474,7 +1191,6 @@ namespace 珠心算出題_加減_
                                     flagGraphics.DrawString(_memory[j,2].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + 2 * 40, _strFormat);
                                 }
                             }
-
                             //_memory[j, minus] = _memory[j, minus] * -1;
                             flagGraphics.FillRectangle(_whiteBrush, 87 + 57 * j - 23, 210 * l + NO_height + minus * 40 + 1, 20, 20);
                             flagGraphics.DrawString(_memory[j, minus].ToString(), _drawFont, _drawBrush, 87 + 57 * j, 210 * l + NO_height + minus * 40, _strFormat);
