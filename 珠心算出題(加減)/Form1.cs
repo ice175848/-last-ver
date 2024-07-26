@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
+using ClosedXML.Excel;
+
 
 namespace 珠心算出題_加減_
 {
@@ -49,6 +52,11 @@ namespace 珠心算出題_加減_
         }
         private void ShowOrHideAnswers()
         {
+            ShowOrHideAnswers(showAnswers);
+        }
+
+        private void ShowOrHideAnswers(bool show)
+        {
             using (Graphics flagGraphics = Graphics.FromImage(_flag))
             {
                 int startX = 60;
@@ -63,7 +71,7 @@ namespace 珠心算出題_加減_
                     int yOffset = startY + l * (numRows + 2) * cellHeight;
                     for (int j = 0; j < numCols; j++)
                     {
-                        if (showAnswers)
+                        if (show)
                         {
                             int ans = 0;
                             for (int i = 0; i < numRows; i++)
@@ -80,6 +88,7 @@ namespace 珠心算出題_加減_
                 }
             }
         }
+
         private bool CheckForNegative(int j, int numberOfDigits)
         {
             int sum = 0;
@@ -93,9 +102,6 @@ namespace 珠心算出題_加減_
             }
             return false; // 計算過程中沒有出現負數
         }
-
-
-
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -131,7 +137,7 @@ namespace 珠心算出題_加減_
                 case 3:
                 case 4:
                     numericUpDown1.Value = 12;
-                    numericUpDown2.Enabled = false;
+                    //numericUpDown2.Enabled = false;
                     break;
                 case 5:
                     numericUpDown1.Value = 13;
@@ -1282,9 +1288,96 @@ namespace 珠心算出題_加減_
             }
         }
 
+        private void AddPageNumberToImage(int pageNumber)
+        {
+            using (Graphics flagGraphics = Graphics.FromImage(_flag))
+            {
+                flagGraphics.DrawString($"第 {pageNumber} 張", _noFont, _drawBrush, 290, 835);
+            }
+        }
+
+        private List<AnswerRecord> GetAnswersForCurrentQuestion(int pageNumber)
+        {
+            List<AnswerRecord> answers = new List<AnswerRecord>();
+            for (int l = 0; l < 4; l++)
+            {
+                for (int j = 0; j < 10; j++)
+                {
+                    int ans = 0;
+                    for (int i = 0; i < 8; i++) // 計算所有 8 個數字的和
+                    {
+                        ans += _memory[j + l * 10, i];
+                    }
+                    answers.Add(new AnswerRecord
+                    {
+                        PageNumber = pageNumber,
+                        QuestionNumber = j + 1 + l * 10,
+                        Answer = ans
+                    });
+                }
+            }
+            return answers;
+        }
+
+
+        private void SaveAnswersToExcel(string folderPath, List<AnswerRecord> answers)
+        {
+            string excelPath = Path.Combine(folderPath, "答案.xlsx");
+
+            using (var workbook = new ClosedXML.Excel.XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("答案");
+
+                worksheet.Cell(1, 1).Value = "考卷";
+                worksheet.Cell(1, 2).Value = "題號";
+                worksheet.Cell(1, 3).Value = "答案";
+
+                for (int i = 0; i < answers.Count; i++)
+                {
+                    worksheet.Cell(i + 2, 1).Value = answers[i].PageNumber;
+                    worksheet.Cell(i + 2, 2).Value = answers[i].QuestionNumber;
+                    worksheet.Cell(i + 2, 3).Value = answers[i].Answer;
+                }
+
+                workbook.SaveAs(excelPath);
+            }
+        }
+
+        public class AnswerRecord
+        {
+            public int PageNumber { get; set; }
+            public int QuestionNumber { get; set; }
+            public int Answer { get; set; }
+        }
         private void button3_Click(object sender, EventArgs e)
         {
-            _flag?.Save("D:/Program Item/test.png");
+            FolderBrowserDialog folderDialog = new FolderBrowserDialog();
+            if (folderDialog.ShowDialog() == DialogResult.OK)
+            {
+                string folderPath = folderDialog.SelectedPath;
+                List<AnswerRecord> answers = new List<AnswerRecord>();
+
+                for (int i = 1; i <= 10; i++)
+                {
+                    GenerateQuestions(_difficultyComboBox.SelectedIndex + 1);
+                    string questionPath = Path.Combine(folderPath, $"考題_{i}.png");
+                    AddPageNumberToImage(i); // 在图片上添加页码
+                    _flag.Save(questionPath);
+
+                    answers.AddRange(GetAnswersForCurrentQuestion(i));
+
+                    ShowOrHideAnswers(true); // 顯示答案
+                    string answerPath = Path.Combine(folderPath, $"考題_{i}_答案.png");
+                    AddPageNumberToImage(i); // 在答案图片上也添加页码
+                    _flag.Save(answerPath);
+                    ShowOrHideAnswers(false); // 隱藏答案
+                }
+
+                SaveAnswersToExcel(folderPath, answers);
+                MessageBox.Show("考題和答案已生成並保存至選定資料夾中！");
+            }
         }
+
+        
     }
 }
